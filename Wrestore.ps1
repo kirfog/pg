@@ -13,12 +13,10 @@ do {$newbase = read-host "New database name"
         }
     }
 } until (($exist -ne $true) -or (($exist -eq $true) -and (($enter -eq "yes") -or ($enter -eq "y"))))
+
 if (($newbase -eq $base) -and (($enter -eq "yes") -or ($enter -eq "y"))) {
-    $i = 0
-    while ($i -lt 10){
-        psql -U postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$newbase' AND pid <> pg_backend_pid();" > $null
-        $i = $i + 1
-    }
+    psql -U postgres -c "UPDATE pg_database SET datallowconn = 'false' WHERE datname = '$newbase';"
+    psql -U postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$newbase' AND pid <> pg_backend_pid();" > $null
     echo "Droping $base and creating $newbase..."
     dropdb -U postgres $base
     createdb -U postgres $newbase
