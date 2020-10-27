@@ -2,8 +2,9 @@
 apath="/mnt/files/backup/"
 alog=$apath$(date +%Y%m%d)"log.txt"
 
-
 echo "***  $(date +%Y%m%d)  ***" >> $alog
+df -ha /pg/data/ >> $alog
+
 psql -U postgres -c "select * from pg_database" | head -n -2 | tail -n +3 | sed '/^ template/d' | sed '/^ postgres/d' | while read -r str ; do
         IFS=' '
         read -ra ADDR <<< "$str"
@@ -16,9 +17,9 @@ echo "*** *** ***" >> $alog
 if  [ ! -s $apath$(date +%Y%m%d)err.txt ]
 then
 	echo -e "\n*** DELETED FILES ***" >> $alog
-	find $apath -type f -mtime +5 -delete >> $alog
+	find $apath -type f -mtime +5 -delete -print >> $alog
 else
-	echo -e "\n*** ERROR ***" >> $alog
+	echo -e "\n***BACKUP ERRORS ***" >> $alog
 	cat $apath$(date +%Y%m%d)err.txt >> $alog
 fi
 echo "*** *** ***" >> $alog
@@ -35,4 +36,4 @@ echo -e "\n*** VACUUM ***" >> $alog
 /usr/bin/time -p -f %E -o $alog -a vacuumdb -U postgres -a -z -F -j 4 >> $alog
 echo "*** *** ***" >> $alog
 
-cat $alog | mail -s "PostgreSQL backup $(date +%Y%m%d)" -r 'PostgreSQL Backup <backup@domain.com>' admin@domain.com
+cat $alog | mail -s "PostgreSQL backup $(date +%Y%m%d)" -r 'PostgreSQL Backup <noreplay@mcs-spb.com>' kadmin@mcs-spb.com
